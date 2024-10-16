@@ -69,5 +69,14 @@
         (let ((proc (expval->proc (value-of rator env)))
             (val (value-of rand env)))
             (apply-procedure proc val)))
-      
+      (let-exp (var exp body)
+        (let ((val (value-of exp env)))
+          (value-of body (extend-env var val env))))
+      (letrec-exp (proc-name lambda_exp letrec-body)
+        (value-of letrec-body (extend-env-rec proc-name lambda_exp env)))
       (else (error 'value-of "Unsupported expression: ~s" exp)))))
+
+;; On parser.scm when we input letrec, it return 3 variables, which proc-name, lambda-exp and letrec-body.
+;; In lambda expression, it has 2 variables which variable and expression.
+;; Variable in lambda expression can be mapped as bounded-var and expression can be mapped as procedure-body
+;; in letrec-exp.
