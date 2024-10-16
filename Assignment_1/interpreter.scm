@@ -14,6 +14,12 @@
       (a-program (exp)
                  (value-of exp env)))))
 
+(define apply-procedure
+  (lambda (proc1 val)
+    (cases proc proc1
+      (procedure (var body saved-env)
+        (value-of body (extend-env var val saved-env))))))
+
 ;; value-of : Exp * Env -> ExpVal
 (define value-of
   (lambda (exp env)
@@ -57,4 +63,11 @@
           (if (expval->bool val)
             (value-of exp2 env)
             (value-of exp3 env))))
+      (lambda-exp (var exp)
+        (proc-val (procedure var exp env)))
+      (app-exp (rator rand)
+        (let ((proc (expval->proc (value-of rator env)))
+            (val (value-of rand env)))
+            (apply-procedure proc val)))
+      
       (else (error 'value-of "Unsupported expression: ~s" exp)))))
