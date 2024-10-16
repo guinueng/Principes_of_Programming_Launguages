@@ -1,6 +1,6 @@
 #lang racket
 
-(define debug-mode #f)
+(define debug-mode #t)
 
 (provide debug)
 
