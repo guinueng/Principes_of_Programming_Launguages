@@ -76,7 +76,14 @@
         (value-of letrec-body (extend-env-rec proc-name lambda_exp env)))
       (else (error 'value-of "Unsupported expression: ~s" exp)))))
 
+;; 20211216 GwanUk Lee
+
 ;; On parser.scm when we input letrec, it return 3 variables, which proc-name, lambda-exp and letrec-body.
 ;; In lambda expression, it has 2 variables which variable and expression.
 ;; Variable in lambda expression can be mapped as bounded-var and expression can be mapped as procedure-body
 ;; in letrec-exp.
+
+;; Reference
+;; 1. Lecture Note Given by Professor.
+;; 2. https://web.mit.edu/scheme_v9.2/doc/mit-scheme-ref/Equivalence-Predicates.html
+;; 3. https://www.cs.cmu.edu/Groups/AI/html/r4rs/r4rs_6.html
