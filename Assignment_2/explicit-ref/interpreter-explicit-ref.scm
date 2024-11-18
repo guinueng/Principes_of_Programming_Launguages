@@ -22,12 +22,6 @@
       (procedure (var body saved-env)
         (value-of body (extend-env var val saved-env))))))
 
-(define value-of-operand
-  (lambda (exp env)
-    (cases expression exp
-      (var-exp (var) (apply-env env var))
-      (else (newref (value-of exp env))))))
-
 ;; value-of : Exp * Env -> ExpVal
 (define value-of
   (lambda (exp env)
