@@ -22,7 +22,7 @@
   (lambda (proc1 val)
     (cases proc proc1
       (procedure (var body saved-env)
-        (value-of body (extend-env var (newref val) saved-env))))));
+        (value-of body (extend-env var (newref val) saved-env))))))
 
 ;; value-of : Exp * Env -> ExpVal
 (define value-of
@@ -55,14 +55,14 @@
       (lambda-exp (bound-var body)
                   (proc-val (procedure bound-var body env)))
       (var-exp (var)
-              (deref (apply-env env var)));
+              (deref (apply-env env var)))
       (app-exp (rator rand)
         (let ((proc (expval->proc (value-of rator env)))
             (val (value-of rand env)))
             (apply-procedure proc val)))
       (let-exp (var exp body)
         (let ((val (value-of exp env)))
-          (value-of body (extend-env var (newref val) env))));
+          (value-of body (extend-env var (newref val) env))))
       (letrec-exp (proc-name lambda_exp letrec-body)
         (value-of letrec-body (extend-env-rec proc-name lambda_exp env)))
       (begin-exp (exp)
@@ -98,7 +98,7 @@
 ; Call by value intepreter.
 ;
 ; In implicit form and call by value, we can reuse some of function in explicit reference intepreter.
-; Modified function would be apply-procedure, var-exp, let-exp, 
+; Modified function would be apply-procedure, var-exp, let-exp.
 ; Newly added function would be assign-exp.
 ; In apply-procedure, we changed reference as implicit form, thus we need to add value in store and environment would save reference location.
 ; Thus, extend-env's middle part which is value part would be filled w/ reference.
