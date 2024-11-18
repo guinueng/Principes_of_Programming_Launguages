@@ -18,6 +18,15 @@
       (a-program (exp)
                  (value-of exp env)))))
 
+(define initialize-store!
+  (lambda ()
+    (set! the-store (empty-store))))
+
+(define-datatype thunk thunk?
+  (a-thunk
+    (exp expression?)
+    (env environment?)))
+
 ;; value-of : Exp * Env -> ExpVal
 (define value-of
   (lambda (exp env)
@@ -48,4 +57,26 @@
                   (value-of else env)))
       (lambda-exp (bound-var body)
                   (proc-val (procedure bound-var body env)))
+      (call-exp (rator rand)
+        (let ((proc (expval->proc (value-of rator env)))
+              (arg (value-of-operand rand env)))
+            (apply-procedure proc arg)))
       (else (error 'value-of "Unsupported expression: ~s" exp)))))
+
+(define value-of-operand
+  (lambda (exp env)
+    (cases expression exp
+      (var-exp(var) (apply-env env var))
+      (else (newref (a-thunk exp env))))))
+
+(define apply-procedure
+  (lambda (proc1 val)
+    (cases proc proc1
+      (procedure (var body saved-env)
+        (value-of body (extended-env var val saved-env))))))
+
+(define newref
+  (lambda (val)
+    (let ((next-ref (length the-store)))
+      (set! the-store (append the-store (list val)))
+        next-ref)))

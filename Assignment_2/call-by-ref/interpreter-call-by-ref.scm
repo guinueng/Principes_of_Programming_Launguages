@@ -24,6 +24,7 @@
     (debug "Evaluating exp: ~s, env: ~s~n" exp env)
     (cases expression exp
       (const-exp (num) (num-val num))
+      
       (add-exp (exp1 exp2)
                (let ((result (+ (expval->num (value-of exp1 env))
                                 (expval->num (value-of exp2 env)))))
@@ -50,3 +51,13 @@
                   (proc-val (procedure bound-var body env)))
       (else (error 'value-of "Unsupported expression: ~s" exp)))))
 
+
+      (app-exp (rator rand)
+        (let ((proc (expval->proc (value-of rator env)))
+            (val (value-of rand env)))
+            (apply-procedure proc val)))
+      (let-exp (var exp body)
+        (let ((val (value-of exp env)))
+          (value-of body (extend-env var val env))))
+      (letrec-exp (proc-name lambda_exp letrec-body)
+        (value-of letrec-body (extend-env-rec proc-name lambda_exp env)))

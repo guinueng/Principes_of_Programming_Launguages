@@ -16,6 +16,18 @@
       (a-program (exp)
                  (value-of exp env)))))
 
+(define apply-procedure
+  (lambda (proc1 val)
+    (cases proc proc1
+      (procedure (var body saved-env)
+        (value-of body (extend-env var val saved-env))))))
+
+(define value-of-operand
+  (lambda (exp env)
+    (cases expression exp
+      (var-exp (var) (apply-env env var))
+      (else (newref (value-of exp env))))))
+
 ;; value-of : Exp * Env -> ExpVal
 (define value-of
   (lambda (exp env)
@@ -46,6 +58,47 @@
                   (value-of else env)))
       (lambda-exp (bound-var body)
                   (proc-val (procedure bound-var body env)))
+      (var-exp (var)
+              (apply-env env var))
+      (app-exp (rator rand)
+        (let ((proc (expval->proc (value-of rator env)))
+            (val (value-of rand env)))
+            (apply-procedure proc val)))
+      (let-exp (var exp body)
+        (let ((val (value-of exp env)))
+          (value-of body (extend-env var val env))))
+      (letrec-exp (proc-name lambda_exp letrec-body)
+        (value-of letrec-body (extend-env-rec proc-name lambda_exp env)))
+      (begin-exp (exp)
+        (display "exp: ")
+        (display exp)
+        (let ((rator (car exp))
+              (rand (cdr exp)))
+          (display "\nrator: ")
+          (display rator)
+          (display "\nrand: ")
+          (display rand)
+          (display "\n")
+          (let ((val (value-of rator env)))
+            (display "val: ")
+            (display val)
+            (display "\nCheck status.\n")
+            (if (null? rand)
+              (expval->num val)
+              (value-of (begin-exp rand) env)))))
+      (newref-exp (exp)
+        (let ((val (value-of exp env)))
+          (ref-val (newref val))))
+      (deref-exp (exp)
+        (let ((val (value-of exp env)))
+          (let ((ref (expval->ref val)))
+            (deref ref))))
+      (setref-exp (exp1 exp2)
+        (let ((ref (expval->ref (value-of exp1 env))))
+          (let ((val (value-of exp2 env)))
+            (begin
+              (setref! ref val)
+              (num-val 23)))))
       (else (error 'value-of "Unsupported expression: ~s" exp)))))
 
 
