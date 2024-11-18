@@ -87,6 +87,8 @@
 
 ; 20211216 GwanUk Lee
 ;
+; Explicit reference intepreter.
+;
 ; In explicit form, var-exp, let-exp, letrec-exp can be used as formal form in assignment_1.
 ; Newly added function would be begin-exp, newref-exp, deref-exp, setref-exp.
 ; In begin-exp, it is sequence of expression. It returns final execution expression's value.
