@@ -91,4 +91,15 @@
               (num-val 23)))))
       (else (error 'value-of "Unsupported expression: ~s" exp)))))
 
-
+; 20211216 GwanUk Lee
+;
+; In explicit form, var-exp, let-exp, letrec-exp can be used as formal form in assignment_1.
+; Newly added function would be begin-exp, newref-exp, deref-exp, setref-exp.
+; In begin-exp, it is sequence of expression. It returns final execution expression's value.
+; In newref-exp, it is used to make new reference in store.
+; In deref-exp, it is used to take value of target reference from store.
+; In setref-exp, it is used to update value of target reference from store, thus return value should be anything.
+;
+; Reference:
+; 1. Lecture Note Given by Professor.
+; 2. Textbook.
