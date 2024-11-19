@@ -36,7 +36,6 @@
     (debug "Evaluating exp: ~s, env: ~s~n" exp env)
     (cases expression exp
       (const-exp (num) (num-val num))
-      
       (add-exp (exp1 exp2)
                (let ((result (+ (expval->num (value-of exp1 env))
                                 (expval->num (value-of exp2 env)))))
@@ -70,6 +69,9 @@
       (let-exp (var exp body)
         (let ((val (value-of exp env)))
           (value-of body (extend-env var (newref val) env))))
+      (letref-exp (var exp body)
+        (let ((val (value-of body (extend-env var (newref exp) env))))
+          (setref! (value-of-operand exp env) val)))
       (letrec-exp (proc-name lambda_exp letrec-body)
         (value-of letrec-body (extend-env-rec proc-name lambda_exp env)))
       (begin-exp (exp)
@@ -110,7 +112,10 @@
 ; In apply-procedure, it changed as formal form, which it saves as value given which would be reference directly.
 ; Thus in app-exp, we use value-of-operand to apply value or get new reference location.
 ; value-of-operand is newly added, and it works as mentioned above.
+; Also, during letref function, we need to bring reference of exp and need to update it's store value as value of body.
+; Thus to bring store position, internally I used value-of-operand function.
 ;
 ; Reference:
 ; 1. Lecture Note Given by Professor.
 ; 2. Textbook.
+; 3. https://docs.racket-lang.org/reference/pairs.html

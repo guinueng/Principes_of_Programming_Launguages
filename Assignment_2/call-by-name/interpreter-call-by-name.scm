@@ -18,14 +18,23 @@
       (a-program (exp)
                  (value-of exp env)))))
 
-(define initialize-store!
-  (lambda ()
-    (set! the-store (empty-store))))
+(define value-of-operand
+  (lambda (exp env)
+    (cases expression exp
+      (var-exp (var) (apply-env env var))
+      (else (newref (a-thunk exp env))))))
 
-(define-datatype thunk thunk?
-  (a-thunk
-    (exp expression?)
-    (env environment?)))
+(define apply-procedure
+  (lambda (proc1 val)
+    (cases proc proc1
+      (procedure (var body saved-env)
+        (value-of body (extend-env var val saved-env))))))
+
+(define value-of-thunk
+  (lambda (th)
+    (cases thunk th
+      (a-thunk (exp1 saved-env)
+        (value-of exp1 saved-env)))))
 
 ;; value-of : Exp * Env -> ExpVal
 (define value-of
@@ -57,26 +66,75 @@
                   (value-of else env)))
       (lambda-exp (bound-var body)
                   (proc-val (procedure bound-var body env)))
-      (call-exp (rator rand)
+      (var-exp (var)
+        (let ((ref1 (apply-env env var)))
+          (let ((w (deref ref1)))
+            (if (expval? w)
+              w
+              (let ((val (value-of-thunk w)))
+                (begin
+                  (set! ref1 val)
+                  val))))))
+      (app-exp (rator rand)
         (let ((proc (expval->proc (value-of rator env)))
-              (arg (value-of-operand rand env)))
-            (apply-procedure proc arg)))
+            (val (value-of-operand rand env)))
+            (apply-procedure proc val)))
+      (let-exp (var exp body)
+        (let ((val (value-of exp env)))
+          (value-of body (extend-env var (newref val) env))))
+      (letrec-exp (proc-name lambda_exp letrec-body)
+        (value-of letrec-body (extend-env-rec proc-name lambda_exp env)))
+      (begin-exp (exp)
+        (let ((rator (car exp))
+              (rand (cdr exp)))
+          (let ((val (value-of rator env)))
+            (if (null? rand)
+              (expval->num val)
+              (value-of (begin-exp rand) env)))))
+      (newref-exp (exp)
+        (let ((val (value-of exp env)))
+          (ref-val (newref val))))
+      (deref-exp (exp)
+        (let ((val (value-of exp env)))
+          (let ((ref (expval->ref val)))
+            (deref ref))))
+      (setref-exp (exp1 exp2)
+        (let ((ref (expval->ref (value-of exp1 env))))
+          (let ((val (value-of exp2 env)))
+            (begin
+              (setref! ref val)
+              val))))
+      (assign-exp (var exp)
+        (let ((val (value-of exp env)))
+          (setref!
+            (apply-env env var)
+            val)
+          val))
       (else (error 'value-of "Unsupported expression: ~s" exp)))))
 
-(define value-of-operand
-  (lambda (exp env)
-    (cases expression exp
-      (var-exp(var) (apply-env env var))
-      (else (newref (a-thunk exp env))))))
-
-(define apply-procedure
-  (lambda (proc1 val)
-    (cases proc proc1
-      (procedure (var body saved-env)
-        (value-of body (extended-env var val saved-env))))))
-
-(define newref
-  (lambda (val)
-    (let ((next-ref (length the-store)))
-      (set! the-store (append the-store (list val)))
-        next-ref)))
+; 20211216 GwanUk Lee
+;
+; Call by reference intepreter.
+;
+; In implicit form and call by reference, we can reuse some of function in call by value.
+; Modified function would be apply-procedure, app-exp.
+; Newly added function would be value-of-operand.
+; In apply-procedure, it changed as formal form, which it saves as value given which would be reference directly.
+; Thus in app-exp, we use value-of-operand to apply value or get new reference location.
+; value-of-operand is newly added, and it works as mentioned above.
+;
+; Reference:
+; 1. Lecture Note Given by Professor.
+; 2. Textbook.
+; 3. https://docs.racket-lang.org/reference/pairs.html
+;
+;
+;      (var-exp (var)
+;        (let ((ref1 (apply-env env var)))
+;          (let ((w (deref ref1)))
+;            (if (expval? w)
+;              w
+;              (let ((val (value-of-thunk w)))
+;                (begin
+;                  (setref! ref1 val)
+;                  val))))))
