@@ -60,6 +60,13 @@
     (implicit-3 "(let (x 1) (begin (set x (+ x 5)) x))" 6)
     ))
 
+; (struct:letrec-exp 
+; (f) 
+; (#(struct:lambda-exp x #(struct:app-exp #(struct:var-exp f) #(struct:add-exp #(struct:var-exp x) #(struct:const-exp 1)))))
+;  #(struct:let-exp a #(struct:app-exp #(struct:var-exp f) #(struct:const-exp 0)) #(struct:const-exp 5))
+; )
+
+
 ;; run : String -> ExpVal
 (define run
   (lambda (string)

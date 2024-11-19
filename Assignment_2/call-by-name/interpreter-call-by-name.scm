@@ -73,15 +73,15 @@
               w
               (let ((val (value-of-thunk w)))
                 (begin
-                  (set! ref1 val)
+                  (setref! ref1 val)
                   val))))))
       (app-exp (rator rand)
         (let ((proc (expval->proc (value-of rator env)))
             (val (value-of-operand rand env)))
             (apply-procedure proc val)))
       (let-exp (var exp body)
-        (let ((val (value-of exp env)))
-          (value-of body (extend-env var (newref val) env))))
+        (let ((val (value-of-operand exp env)))
+          (value-of body (extend-env var val env))))
       (letrec-exp (proc-name lambda_exp letrec-body)
         (value-of letrec-body (extend-env-rec proc-name lambda_exp env)))
       (begin-exp (exp)
@@ -114,27 +114,18 @@
 
 ; 20211216 GwanUk Lee
 ;
-; Call by reference intepreter.
+; Call by name intepreter.
 ;
-; In implicit form and call by reference, we can reuse some of function in call by value.
-; Modified function would be apply-procedure, app-exp.
-; Newly added function would be value-of-operand.
-; In apply-procedure, it changed as formal form, which it saves as value given which would be reference directly.
-; Thus in app-exp, we use value-of-operand to apply value or get new reference location.
-; value-of-operand is newly added, and it works as mentioned above.
+; In implicit form and call by name, we can reuse function in call by reference.
+; Modified function would be var-exp, app-exp, value-of-operand, apply-procedure.
+; Newly added function would be value-of-thunk.
+; Modified function is modified as it can use thunk.
+; In let function, we get exp value as value-of-operand which will evaluate later it needs.
+; value-of-operand returns reference, thus we can directly input reference by utilizing extend-env.
+; value-of-thunk is added to due added datatype thunk.
 ;
 ; Reference:
 ; 1. Lecture Note Given by Professor.
 ; 2. Textbook.
 ; 3. https://docs.racket-lang.org/reference/pairs.html
 ;
-;
-;      (var-exp (var)
-;        (let ((ref1 (apply-env env var)))
-;          (let ((w (deref ref1)))
-;            (if (expval? w)
-;              w
-;              (let ((val (value-of-thunk w)))
-;                (begin
-;                  (setref! ref1 val)
-;                  val))))))
