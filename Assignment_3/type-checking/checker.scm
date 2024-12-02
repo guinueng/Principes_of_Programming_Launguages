@@ -56,15 +56,8 @@
                       (check-equal-type! ty1 (bool-type) exp1)
                       (check-equal-type! ty2 ty3 exp2)
                       ty2))
-      (lambda-exp (var type body)
-                (for-each (lambda (var type)
-                            (extend-tenv ((car var) (car type) tenv))
-                            (display var)
-                            (display type)
-                            (display "\n"))
-                  (var type))
-                (let ((ty (type-of body tenv)))
-                  (ty)))
+      (lambda-exp (vars types body)
+                (proc-type types (type-of body (extend-tenv-list vars types tenv))))
       (else (error (format "type-of: not implemented: ~s" exp))))))
 
 (define check-equal-type!
@@ -81,4 +74,3 @@
       (begin
         (check-equal-type! (car tys1) (car tys2) (car exps))
         (check-equal-type-list! (cdr tys1) (cdr tys2) (cdr exps))))))
-
