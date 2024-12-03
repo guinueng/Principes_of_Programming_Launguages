@@ -110,6 +110,3 @@
       (begin
         (check-equal-type! (car tys1) (car tys2) (car exps))
         (check-equal-type-list! (cdr tys1) (cdr tys2) (cdr exps))))))
-
-;; test
-;;;;;;
