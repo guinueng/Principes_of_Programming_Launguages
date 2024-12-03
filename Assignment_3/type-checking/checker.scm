@@ -58,6 +58,32 @@
                       ty2))
       (lambda-exp (vars types body)
                 (proc-type types (type-of body (extend-tenv-list vars types tenv))))
+      (app-exp (rator rand)
+                (let ((rator-ty (type-of rator tenv))
+                      (rand-ty (type-of rand tenv)))
+                  (cases type rator-ty
+                    (proc-type (arg-ty rst-ty)
+                      (begin
+                        (check-equal-type-list! arg-ty rand-ty rand)
+                        rst-ty))
+                    (int-type ()
+                      (check-equal-type! (int-type) rand-ty rand)
+                      (int-type))
+                    (bool-type ()
+                      (check-equal-type! (bool-type) rand-ty rand)
+                      (bool-type)))))
+      (let-exp (vars exps body)
+                (let ((var (car vars))
+                      (ty (type-of (car exps) tenv)))
+                  (if (null? (cdr vars))
+                    (type-of body (extend-tenv var ty tenv))
+                    (type-of (let-exp (cdr vars) (cdr exps) body) (extend-tenv var ty tenv)))))
+      (letrec-exp (rst-ty proc-name lambda-exp body)
+                (let ((tenv-letrec-body
+                  (extend-tenv proc-name (proc-type (lambda-exp->var-types lambda-exp) rst-ty) tenv)))
+                  (let ((body-ty (type-of body (extend-tenv (lambda-exp->bound-vars lambda-exp) tenv-letrec-body))))
+                    (check-equal-type! body-ty rst-ty body)
+                    (type-of body tenv-letrec-body))))
       (else (error (format "type-of: not implemented: ~s" exp))))))
 
 (define check-equal-type!
