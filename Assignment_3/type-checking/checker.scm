@@ -88,12 +88,20 @@
                   (if (null? (cdr vars))
                     (type-of body (extend-tenv var ty tenv))
                     (type-of (let-exp (cdr vars) (cdr exps) body) (extend-tenv var ty tenv)))))
-      (letrec-exp (rst-ty proc-name lambda-exp body)
-                (let ((tenv-letrec-body
-                  (extend-tenv proc-name (proc-type (lambda-exp->var-types lambda-exp) rst-ty) tenv)))
-                  (let ((body-ty (type-of body (extend-tenv (lambda-exp->bound-vars lambda-exp) tenv-letrec-body))))
-                    (check-equal-type! body-ty rst-ty body)
-                    (type-of body tenv-letrec-body))))
+      (letrec-exp (rst-tys proc-names lambda-exps body)
+                (extend-tenv (car proc-names) (proc-type (lambda-exp->var-types (car lambda-exp)) (car rst-tys)) tenv)
+                (if (null? (cdr rst-tys))
+                  (let ((body-ty (type-of body (extend-tenv (lambda-exp->bound-vars lambda-exps) tenv)))
+                      (check-equal-type! body-ty rst-tys body)
+                      (type-of body tenv-letrec-body)))
+                  (type-of (letrec-exp (cdr rst-tys) (cdr proc-names) (cdr lambda-exps) body) tenv)))
+      (begin-exp (exps)
+        (let ((rator (car exps))
+              (rand (cdr exps)))
+          (let ((ty (type-of rator tenv)))
+            (if (null? rand)
+              ty
+              (type-of (begin-exp rand) tenv)))))
       (else (error (format "type-of: not implemented: ~s" exp))))))
 
 (define check-equal-type!
