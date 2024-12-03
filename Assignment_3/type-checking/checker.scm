@@ -68,7 +68,6 @@
                           (rand-ty-list (cdr rand-list) rst-list))))))
                 (let ((rator-ty (type-of rator tenv))
                       (rand-init-ty (list (type-of (car rand) tenv))))
-          
                   (let ((rand-ty
                           (if (not (null? (cdr rand)))
                             (rand-ty-list (cdr rand) rand-init-ty)
