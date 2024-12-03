@@ -1,0 +1,89 @@
+#lang racket
+
+(require eopl)
+(require "datatype.scm")
+(require "environments.scm")
+(require "utils.scm")
+
+(provide value-of-program value-of)
+
+;; value-of-program : Program * Env -> ExpVal
+(define value-of-program
+  (lambda (pgm env)
+    (cases program pgm
+      (a-program (exp)
+                 (value-of exp env)))))
+
+(define apply-procedure
+  (lambda (proc1 val)
+    (cases proc proc1
+      (procedure (var body saved-env)
+        (value-of body (extend-env var val saved-env))))))
+
+;; value-of : Exp * Env -> ExpVal
+(define value-of
+  (lambda (exp env)
+    (debug "Evaluating exp: ~s, env: ~s~n" exp env)
+    (cases expression exp
+      (const-exp (num) (num-val num))
+      (var-exp (var) (apply-env env var))
+      (add-exp (exp1 exp2)
+        (let ((val1 (value-of exp1 env))
+              (val2 (value-of exp2 env)))
+          (let ((num1 (expval->num val1))
+                (num2 (expval->num val2)))
+            (num-val (+ num1 num2)))))
+      (diff-exp (exp1 exp2)
+        (let ((val1 (value-of exp1 env))
+              (val2 (value-of exp2 env)))
+          (let ((num1 (expval->num val1))
+                (num2 (expval->num val2)))
+            (num-val (- num1 num2)))))
+      (zero?-exp (exp)
+        (let ((val (value-of exp env)))
+          (let ((num (expval->num val)))
+            (if (zero? num)
+              (bool-val #t)
+              (bool-val #f)))))
+      (less-than-exp (exp1 exp2)
+        (let ((val1 (value-of exp1 env))
+              (val2 (value-of exp2 env)))
+          (let ((num1 (expval->num val1))
+                (num2 (expval->num val2)))
+            (if (< num1 num2)
+              (bool-val #t)
+              (bool-val #f)))))
+      (not-exp (exp)
+        (let ((val (value-of exp env)))
+          (if (expval->bool val)
+            (bool-val #f)
+            (bool-val #t))))
+      (if-exp (exp1 exp2 exp3)
+        (let ((val (value-of exp1 env)))
+          (if (expval->bool val)
+            (value-of exp2 env)
+            (value-of exp3 env))))
+      (lambda-exp (var exp)
+        (proc-val (procedure var exp env)))
+      (app-exp (rator rand)
+        (let ((proc (expval->proc (value-of rator env)))
+            (val (value-of rand env)))
+            (apply-procedure proc val)))
+      (let-exp (var exp body)
+        (let ((val (value-of exp env)))
+          (value-of body (extend-env var val env))))
+      (letrec-exp (proc-name lambda_exp letrec-body)
+        (value-of letrec-body (extend-env-rec proc-name lambda_exp env)))
+      (else (error 'value-of "Unsupported expression: ~s" exp)))))
+
+;; 20211216 GwanUk Lee
+
+;; On parser.scm when we input letrec, it return 3 variables, which proc-name, lambda-exp and letrec-body.
+;; In lambda expression, it has 2 variables which variable and expression.
+;; Variable in lambda expression can be mapped as bounded-var and expression can be mapped as procedure-body
+;; in letrec-exp.
+
+;; Reference
+;; 1. Lecture Note Given by Professor.
+;; 2. https://web.mit.edu/scheme_v9.2/doc/mit-scheme-ref/Equivalence-Predicates.html
+;; 3. https://www.cs.cmu.edu/Groups/AI/html/r4rs/r4rs_6.html
